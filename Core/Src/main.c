@@ -14,6 +14,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <math.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -30,12 +31,12 @@ void Start_the_DAC_DMA(void);
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 int sindex = 0;
-int adc_highest_seen = 0;
 int hit_low = true;
 int last_tick = 0;
 int this_tick = 0;
 uint32_t  prim;
 
+int adc_value;
 
 int the_period = 0;
 /* USER CODE END PD */
@@ -47,7 +48,6 @@ int the_period = 0;
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc3;
-DMA_HandleTypeDef hdma_adc3;
 
 DAC_HandleTypeDef hdac1;
 DMA_HandleTypeDef hdma_dac_ch1;
@@ -68,7 +68,7 @@ DMA_HandleTypeDef hdma_usart2_tx;
  * May also want to send the value out with another DMA that
  * reads from this buffer and sends it out via USART2
  */
-#define ADC_BUFFER_LENGTH 1000
+#define ADC_BUFFER_LENGTH 1
 uint16_t adc_buffer[ADC_BUFFER_LENGTH];
 
 /* This is the formatted string buffer for the converted ADC results
@@ -170,7 +170,7 @@ int main(void)
   /* Setup the DMA */
 
   if (HAL_DMA_Init(&hdma_dac_ch1) != HAL_OK)	{while(1);}
-  if (HAL_DMA_Init(&hdma_adc3) != HAL_OK)		{while(1);}
+  // if (HAL_DMA_Init(&hdma_adc3) != HAL_OK)		{while(1);}
   if (HAL_DMA_Init(&hdma_usart2_tx) != HAL_OK)		{while(1);}
 
 
@@ -191,7 +191,7 @@ int main(void)
    * HAL_DMA_PollForTransfer(&hdma_memtomem_dma1_channel1, );
    */
 
-    HAL_ADC_Start_DMA(&hadc3, (uint32_t*) adc_buffer, ADC_BUFFER_LENGTH);
+    // HAL_ADC_Start_DMA(&hadc3, (uint32_t*) adc_buffer, ADC_BUFFER_LENGTH);
 
   while (1)
   {
@@ -278,13 +278,13 @@ static void MX_ADC3_Init(void)
   hadc3.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc3.Init.LowPowerAutoWait = DISABLE;
-  hadc3.Init.ContinuousConvMode = ENABLE;
+  hadc3.Init.ContinuousConvMode = DISABLE;
   hadc3.Init.NbrOfConversion = 1;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
-  hadc3.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T3_TRGO;
-  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc3.Init.DMAContinuousRequests = ENABLE;
-  hadc3.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc3.Init.DMAContinuousRequests = DISABLE;
+  hadc3.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   hadc3.Init.OversamplingMode = DISABLE;
   if (HAL_ADC_Init(&hadc3) != HAL_OK)
   {
@@ -419,9 +419,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 799;
+  htim3.Init.Prescaler = 7999;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 100;
+  htim3.Init.Period = 1000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -566,15 +566,11 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
-  __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
   /* DMA1_Channel3_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
-  /* DMA2_Channel5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Channel5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Channel5_IRQn);
 
 }
 
@@ -797,28 +793,49 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc3) {
 	// When the ADC Buffer is filled, come here then launch the USART out... week 2 of the lab
 	//
-	HAL_GPIO_WritePin(ADC_Sample_GPIO_Port, ADC_Sample_Pin, GPIO_PIN_SET);
-	for(int i=0;i<10;i++);	// Just to get a pulse
-	HAL_GPIO_WritePin(ADC_Sample_GPIO_Port, ADC_Sample_Pin, GPIO_PIN_RESET);
 
-   for (int i=0; i<ADC_BUFFER_LENGTH;i++)
-	   { adc_highest_seen = (adc_highest_seen < adc_buffer[i])?adc_buffer[i]:adc_highest_seen;
-		snprintf((char *) adc_results_strings_buffer,100,"%d\n",adc_buffer[i]);
-		printf("%d\n\r",adc_buffer[i]);
-	   }
+	adc_value = HAL_ADC_GetValue(hadc3);
+    __HAL_ADC_CLEAR_FLAG(hadc3, (ADC_FLAG_EOC | ADC_FLAG_EOS));
+    double x = adc_value * 3.3 / 4096;
+    double int_part;
+    double frac_part = modf(x, &int_part);
+    printf("The decimal part of %lf is %lf\n", x, frac_part);
+	// printf("%f\n\r",(double) adc_value*3.3);
+
+    // for (int i=0; i<ADC_BUFFER_LENGTH;i++)
+    // {
+		// snprintf((char *) adc_results_strings_buffer,100,"%d\n",adc_buffer[i]);
+		// printf("%d\n\r",adc_buffer[i]);
+    // }
 	//    HAL_UART_Transmit_DMA((DMA_HandleTypeDef *) &hdma_usart2_tx,adc_results_strings_buffer,ADC_BUFFER_LENGTH);
 	}
 
 
 // Callback: timer has rolled over
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-	{ // Check which version of the timer triggered this callback and toggle the right LED
+	{
+	// Check which version of the timer triggered this callback and toggle the right LED
 	// This timer has to be here to cycle thru the 7-Seg LED displays
 	if (htim == &htim17 ) { MultiFunctionShield__ISRFunc(); }
+	if (htim == &htim3 )
+		{
+		HAL_ADC_Start(&hadc3);
+		HAL_ADC_PollForConversion(&hadc3, 10000);
+		adc_value = HAL_ADC_GetValue(&hadc3);
+		float voltage = 3.3 / 4096 * adc_value;
+		int float_dec = trunc(voltage);
+		int float_ = trunc(voltage);
+		printf("%.2f\n\r",adc_value*3.3/4096);
+		HAL_GPIO_WritePin(ADC_Sample_GPIO_Port, ADC_Sample_Pin, GPIO_PIN_SET);
+		for(int i=0;i<10;i++);	// Just to get a pulse
+		HAL_GPIO_WritePin(ADC_Sample_GPIO_Port, ADC_Sample_Pin, GPIO_PIN_RESET);
+		}
 	}
+
 
 
 void User_DMACompleteCallback(DMA_HandleTypeDef *hdac)
