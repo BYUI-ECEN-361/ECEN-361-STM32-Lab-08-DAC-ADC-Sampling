@@ -182,7 +182,7 @@ int main(void)
   Start_the_DAC_DMA();
 
   /* For second week, we'll look at the ADC, and the DMA for the USART
-   * HAL_ADC_Start_DMA(&hadc3, (uint32_t*) adc_buffer, ADC_BUFFER_LENGTH);
+    HAL_ADC_Start_DMA(&hadc3, (uint32_t*) adc_buffer, ADC_BUFFER_LENGTH);
    * HAL_UART_RegisterCallback(UART_HandleTypeDef *huart, HAL_UART_CallbackIDTypeDef CallbackID, pUART_CallbackTypeDef pCallback)
    * HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*) sineLookupTable_1000_pts, 1000,DAC_ALIGN_12B_R);
    * HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*) sineLookupTable_100_pts, 100,DAC_ALIGN_12B_R);
@@ -190,6 +190,8 @@ int main(void)
    * HAL_DMA_Start_IT(&hdma_dac_ch1, (uint32_t) &sineLookupTable_100_pts, (uint32_t) &hdac1, sizeof(sineLookupTable_100_pts));
    * HAL_DMA_PollForTransfer(&hdma_memtomem_dma1_channel1, );
    */
+
+    HAL_ADC_Start_DMA(&hadc3, (uint32_t*) adc_buffer, ADC_BUFFER_LENGTH);
 
   while (1)
   {
@@ -417,9 +419,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 79;
+  htim3.Init.Prescaler = 799;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 10;
+  htim3.Init.Period = 100;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -594,11 +596,11 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LED_D1_Pin|LED_D2_Pin|LED_D3_Pin|SevenSeg_CLK_Pin
-                          |SevenSeg_DATA_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, ADC_Sample_Pin|Period_Start_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(Period_Start_GPIO_Port, Period_Start_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED_D1_Pin|LED_D2_Pin|LED_D3_Pin|SevenSeg_CLK_Pin
+                          |SevenSeg_DATA_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SevenSeg_LATCH_Pin|LED_D4_Pin, GPIO_PIN_RESET);
@@ -608,6 +610,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : ADC_Sample_Pin Period_Start_Pin */
+  GPIO_InitStruct.Pin = ADC_Sample_Pin|Period_Start_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : Button_1_Pin */
   GPIO_InitStruct.Pin = Button_1_Pin;
@@ -637,13 +646,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF3_TIM8;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : Period_Start_Pin */
-  GPIO_InitStruct.Pin = Period_Start_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(Period_Start_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SevenSeg_LATCH_Pin LED_D4_Pin */
   GPIO_InitStruct.Pin = SevenSeg_LATCH_Pin|LED_D4_Pin;
@@ -798,10 +800,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc3) {
 	// When the ADC Buffer is filled, come here then launch the USART out... week 2 of the lab
 	//
+	HAL_GPIO_WritePin(ADC_Sample_GPIO_Port, ADC_Sample_Pin, GPIO_PIN_SET);
+	for(int i=0;i<10;i++);	// Just to get a pulse
+	HAL_GPIO_WritePin(ADC_Sample_GPIO_Port, ADC_Sample_Pin, GPIO_PIN_RESET);
+
    for (int i=0; i<ADC_BUFFER_LENGTH;i++)
 	   { adc_highest_seen = (adc_highest_seen < adc_buffer[i])?adc_buffer[i]:adc_highest_seen;
 		snprintf((char *) adc_results_strings_buffer,100,"%d\n",adc_buffer[i]);
-		printf("%d\r\n\r",adc_buffer[i]);
+		printf("%d\n\r",adc_buffer[i]);
 	   }
 	//    HAL_UART_Transmit_DMA((DMA_HandleTypeDef *) &hdma_usart2_tx,adc_results_strings_buffer,ADC_BUFFER_LENGTH);
 	}
