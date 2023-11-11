@@ -273,14 +273,13 @@ void MultiFunctionShield_Display_Two_Digits (int8_t value)
 
 
 
-void display_current_sample_case(int current_sample_case)
+void display_current_sample_case(int value)
 	{
 	// Shows:   S.  xx    Where xx is the samples / cycle
 	MultiFunctionShield_Clear();
-	// Now an S (5) with a period
+	MultiFunctionShield_Display(value);
 	// Decimal point is the MSB.  Negative true logic, so to turn on the decimal point, just AND with 0x7F
-	SEGMENT_VALUE[3] = 0x92 & 0x7F;
-    MultiFunctionShield_Display_Two_Digits(current_sample_case);
+	SEGMENT_VALUE[0] = (0x92 & 0x7f);
 
 	}
 

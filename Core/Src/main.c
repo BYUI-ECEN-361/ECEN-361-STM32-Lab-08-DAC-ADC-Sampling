@@ -14,7 +14,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <math.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -36,11 +35,11 @@ int last_tick = 0;
 int this_tick = 0;
 
 enum ADC_Samples_Per_Cycle {
-	one_sample_per		= 1,
-	two_samples_per		= 2,
-	four_samples_per	= 4,
-	eight_samples_per	= 8,
-	fifty_samples_per	= 50,
+	one_sample_per,
+	two_samples_per,
+	four_samples_per,
+	eight_samples_per,
+	fifty_samples_per,
 	NUM_CASES
 } cases;
 
@@ -56,11 +55,11 @@ struct adc_sample_config {
  * The expected waveform is the "1000" point one == 1 Hz
  */
 const struct adc_sample_config sample_case[] = {
-		{one_sample_per,	7999,	10009},	//First #  in each line is the prescaler
-		{two_samples_per,	799,	50039},	//Second # in each line is the period
-		{four_samples_per,	799,	25019},
-		{eight_samples_per,	799,	12510},
-		{fifty_samples_per,	79,		25029}
+		{1,		7999,	10009},	//First #  in each line is the prescaler
+		{2,		799,	50039},	//Second # in each line is the prescaler
+		{4,		799,	25019},	//Third # in each line is the period
+		{8,		799,	12510},
+		{50,	79,		25029}
 		};
 /************** STUDENT EDIT END ******************/
 
@@ -452,9 +451,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 79;
+  htim3.Init.Prescaler = 7999;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 25029;
+  htim3.Init.Period = 1000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -813,6 +812,7 @@ void change_sample_case()
 	HAL_TIM_Base_Stop_IT(&htim3); //Timer3 is the ADC Sample trigger
 	htim3.Init.Prescaler = sample_case[current_sample_case].Prescaler;
 	htim3.Init.Period    = sample_case[current_sample_case].Period;
+	HAL_TIM_Base_Init(&htim3);
 	HAL_TIM_Base_Start_IT(&htim3); //Timer3 is the ADC Sample trigger
 	display_current_sample_case(sample_case[current_sample_case].samples_per);
 	}
@@ -832,12 +832,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	case Button_3_Pin:
 		// Show the ADC Samples / Sec.  (Assumes the 1 Hz source signal)
 		change_sample_case();
-
 	  // MultiFunctionShield_Display(the_period);
 		break;
 	default:
       __NOP();
 	}
+	for(int i=1;i<50;i++);
 }
 
 
