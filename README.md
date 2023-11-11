@@ -17,4 +17,8 @@ Modify the document with answers when finished, then commit your repository to g
 
 After committing and pushing to github, be sure to finish the assignment by pasting the URL of this repo into the iLearn Assignment.  
 
+
+For plotting from the USART2 out (PuTTY),  https://hackaday.io/project/5334-serialplot-realtime-plotting-software
+
+
 <!----------------------------------->

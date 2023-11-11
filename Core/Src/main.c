@@ -159,7 +159,7 @@ int main(void)
 
   // HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,1);
 
-  printf("\033\143"); printf("Welcome to ECEN-361 SineWave Generator\n\r");
+  printf("\033\143"); printf("Welcome to ECEN-361 SineWave Generator\n\r\r");
 
   // Start timer
   MultiFunctionShield_Clear();								// Clear the 7-seg display
@@ -419,9 +419,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 7999;
+  htim3.Init.Prescaler = 799;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 1000;
+  htim3.Init.Period = 12510;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -800,10 +800,11 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc3) {
 
 	adc_value = HAL_ADC_GetValue(hadc3);
     __HAL_ADC_CLEAR_FLAG(hadc3, (ADC_FLAG_EOC | ADC_FLAG_EOS));
-    double x = adc_value * 3.3 / 4096;
-    double int_part;
-    double frac_part = modf(x, &int_part);
-    printf("The decimal part of %lf is %lf\n", x, frac_part);
+    //double x = adc_value * 3.3 / 4096;
+    //double int_part;
+    //double frac_part = modf(x, &int_part);
+    //int intpart = 1;
+    //printf("The decimal part of %lf is %lf\n", x, frac_part);
 	// printf("%f\n\r",(double) adc_value*3.3);
 
     // for (int i=0; i<ADC_BUFFER_LENGTH;i++)
@@ -820,16 +821,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 	// Check which version of the timer triggered this callback and toggle the right LED
 	// This timer has to be here to cycle thru the 7-Seg LED displays
+    int int_part;
 	if (htim == &htim17 ) { MultiFunctionShield__ISRFunc(); }
 	if (htim == &htim3 )
 		{
 		HAL_ADC_Start(&hadc3);
 		HAL_ADC_PollForConversion(&hadc3, 10000);
 		adc_value = HAL_ADC_GetValue(&hadc3);
+
+
+
+
+
 		float voltage = 3.3 / 4096 * adc_value;
-		int float_dec = trunc(voltage);
-		int float_ = trunc(voltage);
-		printf("%.2f\n\r",adc_value*3.3/4096);
+		float look = round(voltage * 4096) / 4096;
+		int_part = (int) look;
+		float frac = trunc((voltage - int_part)*1000);
+		printf("%d.%03d\n\r",int_part,(int) frac);
 		HAL_GPIO_WritePin(ADC_Sample_GPIO_Port, ADC_Sample_Pin, GPIO_PIN_SET);
 		for(int i=0;i<10;i++);	// Just to get a pulse
 		HAL_GPIO_WritePin(ADC_Sample_GPIO_Port, ADC_Sample_Pin, GPIO_PIN_RESET);
