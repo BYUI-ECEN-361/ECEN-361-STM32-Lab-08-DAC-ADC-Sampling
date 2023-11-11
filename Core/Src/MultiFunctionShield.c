@@ -255,6 +255,37 @@ void disp_adc_on_7seg(float inValue)
 
 
 
+void MultiFunctionShield_Display_Two_Digits (int8_t value)
+// Just change the right-most 2 display digits.  Must be 0<= x <=99
+	{
+	if (value <0) {	//Display negative
+			SEGMENT_VALUE[2] = SEGMENT_MINUS;
+			SEGMENT_VALUE[3] = SEGMENT_MINUS;
+		}
+	else
+		{
+		value = value % 99; // Just in case it's bigger
+		MultiFunctionShield_Single_Digit_Display(2, (value / 10));
+		MultiFunctionShield_Single_Digit_Display(1, (value % 10));
+		}
+	}
+
+
+
+
+void display_current_sample_case(int current_sample_case)
+	{
+	// Shows:   S.  xx    Where xx is the samples / cycle
+	MultiFunctionShield_Clear();
+	// Now an S (5) with a period
+	// Decimal point is the MSB.  Negative true logic, so to turn on the decimal point, just AND with 0x7F
+	SEGMENT_VALUE[3] = 0x92 & 0x7F;
+    MultiFunctionShield_Display_Two_Digits(current_sample_case);
+
+	}
+
+
+
 void MultiFunctionShield__ISRFunc(void)
 {
   switch (++ActDigit)

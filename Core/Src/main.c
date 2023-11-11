@@ -34,10 +34,42 @@ int sindex = 0;
 int hit_low = true;
 int last_tick = 0;
 int this_tick = 0;
-uint32_t  prim;
+
+enum ADC_Samples_Per_Cycle {
+	one_sample_per		= 1,
+	two_samples_per		= 2,
+	four_samples_per	= 4,
+	eight_samples_per	= 8,
+	fifty_samples_per	= 50,
+	NUM_CASES
+} cases;
+
+struct adc_sample_config {
+	int samples_per;
+	int Prescaler;
+	int Period;
+	} ;
+
+
+/************** STUDENT EDIT START ******************/
+/* Fill in the values that effect the sample rate, (timer3)
+ * The expected waveform is the "1000" point one == 1 Hz
+ */
+const struct adc_sample_config sample_case[] = {
+		{one_sample_per,	7999,	10009},	//First #  in each line is the prescaler
+		{two_samples_per,	799,	50039},	//Second # in each line is the period
+		{four_samples_per,	799,	25019},
+		{eight_samples_per,	799,	12510},
+		{fifty_samples_per,	79,		25029}
+		};
+/************** STUDENT EDIT END ******************/
+
+
+enum ADC_Samples_Per_Cycle current_sample_case = fifty_samples_per ;
+
+
 
 int adc_value;
-
 int the_period = 0;
 /* USER CODE END PD */
 
@@ -159,7 +191,8 @@ int main(void)
 
   // HAL_GPIO_WritePin(LD2_GPIO_Port,LD2_Pin,1);
 
-  printf("\033\143"); printf("Welcome to ECEN-361 SineWave Generator\n\r\r");
+  printf("\033\143"); printf("Welcome to ECEN-361 Lab-8 Part2 SineWave Sampling\n\r\r");
+
 
   // Start timer
   MultiFunctionShield_Clear();								// Clear the 7-seg display
@@ -419,9 +452,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 799;
+  htim3.Init.Prescaler = 79;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 12510;
+  htim3.Init.Period = 25029;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -771,6 +804,19 @@ void change_points_per_cycle()
 
 // Callback: timer has rolled over
 
+void change_sample_case()
+	{
+	current_sample_case++;
+	if (current_sample_case == NUM_CASES)
+		current_sample_case = 0 ;
+	// Now set the prescaler and the timer
+	HAL_TIM_Base_Stop_IT(&htim3); //Timer3 is the ADC Sample trigger
+	htim3.Init.Prescaler = sample_case[current_sample_case].Prescaler;
+	htim3.Init.Period    = sample_case[current_sample_case].Period;
+	HAL_TIM_Base_Start_IT(&htim3); //Timer3 is the ADC Sample trigger
+	display_current_sample_case(sample_case[current_sample_case].samples_per);
+	}
+
 
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -784,9 +830,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		change_points_per_cycle();
 		break;
 	case Button_3_Pin:
-		// Button_3 changes the Frequency of the DAC, going thru different
-		// speeds
-	  MultiFunctionShield_Display(the_period);
+		// Show the ADC Samples / Sec.  (Assumes the 1 Hz source signal)
+		change_sample_case();
+
+	  // MultiFunctionShield_Display(the_period);
 		break;
 	default:
       __NOP();
@@ -797,22 +844,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc3) {
 	// When the ADC Buffer is filled, come here then launch the USART out... week 2 of the lab
 	//
+	// This is NOT currently used, because we're doing single interrupt for ADC-Trigger
+	// This could be used for a DMA-based buffer
 
 	adc_value = HAL_ADC_GetValue(hadc3);
     __HAL_ADC_CLEAR_FLAG(hadc3, (ADC_FLAG_EOC | ADC_FLAG_EOS));
-    //double x = adc_value * 3.3 / 4096;
-    //double int_part;
-    //double frac_part = modf(x, &int_part);
-    //int intpart = 1;
-    //printf("The decimal part of %lf is %lf\n", x, frac_part);
-	// printf("%f\n\r",(double) adc_value*3.3);
-
-    // for (int i=0; i<ADC_BUFFER_LENGTH;i++)
-    // {
-		// snprintf((char *) adc_results_strings_buffer,100,"%d\n",adc_buffer[i]);
-		// printf("%d\n\r",adc_buffer[i]);
-    // }
-	//    HAL_UART_Transmit_DMA((DMA_HandleTypeDef *) &hdma_usart2_tx,adc_results_strings_buffer,ADC_BUFFER_LENGTH);
 	}
 
 
@@ -825,14 +861,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim == &htim17 ) { MultiFunctionShield__ISRFunc(); }
 	if (htim == &htim3 )
 		{
+		// Kinda tricky printing a floating value with %float types
+		// don't print in this version of C
 		HAL_ADC_Start(&hadc3);
 		HAL_ADC_PollForConversion(&hadc3, 10000);
 		adc_value = HAL_ADC_GetValue(&hadc3);
-
-
-
-
-
 		float voltage = 3.3 / 4096 * adc_value;
 		float look = round(voltage * 4096) / 4096;
 		int_part = (int) look;
