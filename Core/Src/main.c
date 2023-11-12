@@ -64,7 +64,7 @@ const struct adc_sample_config sample_case[] = {
 		{2,		799,	12510},	//Second # in each line is the prescaler
 		{4,		799,	12510},	//Third # in each line is the period
 		{8,		799,	12510}, // This line is valid,
-		{50,	79,		25029}
+		{50,	79,		20018}
 		};
 /************** STUDENT EDIT END ******************/
 
@@ -445,7 +445,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 79;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 1000;
+  htim3.Init.Period = 20018;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
