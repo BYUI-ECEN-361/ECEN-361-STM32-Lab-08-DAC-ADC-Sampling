@@ -2,13 +2,12 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : ECEN-361-Lab-08 ADC-DAC-DMA
+  * @brief          : ECEN-361-Lab-08-Part-2-DAC-ADC-Sampling
   *
   * BYU-Idaho
   * Fall-2023 :   Lynn Watson
   *
   * See the  STUDENTS EDITABLE places below to modify for submission
-  *
   ******************************************************************************
   */
 /* USER CODE END Header */
@@ -19,6 +18,7 @@
 /* USER CODE BEGIN Includes */
 #include "sinewavetable.h"
 #include "MultiFunctionShield.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,12 +53,17 @@ struct adc_sample_config {
 /************** STUDENT EDIT START ******************/
 /* Fill in the values that effect the sample rate, (timer3)
  * The expected waveform is the "1000" point one == 1 Hz
+ *
+ * NOTE that the values are only valid for 50 and 8.  1,2,4 are all TBD
+ * Also note that to get really 'exact' fine-tuning, it's necessary
+ * to do some measurement.  The 'why' is a question in the assignment.
  */
+
 const struct adc_sample_config sample_case[] = {
-		{1,		7999,	10009},	//First #  in each line is the prescaler
-		{2,		799,	50039},	//Second # in each line is the prescaler
-		{4,		799,	25019},	//Third # in each line is the period
-		{8,		799,	12510},
+		{1,		799,	12510},	//First #  in each line is the samples_per
+		{2,		799,	12510},	//Second # in each line is the prescaler
+		{4,		799,	12510},	//Third # in each line is the period
+		{8,		799,	12510}, // This line is valid,
 		{50,	79,		25029}
 		};
 /************** STUDENT EDIT END ******************/
@@ -210,20 +215,7 @@ int main(void)
 // HAL_StatusTypeDef HAL_DMA_RegisterCallback(DMA_HandleTypeDef *hdma, HAL_DMA_CallbackIDTypeDef CallbackID, void (* pCallback)(DMA_HandleTypeDef *_hdma));
 //*Tell the DMA interrupt where to go*/
   HAL_DMA_RegisterCallback(&hdma_dac_ch1, HAL_DAC_CH1_COMPLETE_CB_ID, User_DMACompleteCallback);
-
   Start_the_DAC_DMA();
-
-  /* For second week, we'll look at the ADC, and the DMA for the USART
-    HAL_ADC_Start_DMA(&hadc3, (uint32_t*) adc_buffer, ADC_BUFFER_LENGTH);
-   * HAL_UART_RegisterCallback(UART_HandleTypeDef *huart, HAL_UART_CallbackIDTypeDef CallbackID, pUART_CallbackTypeDef pCallback)
-   * HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*) sineLookupTable_1000_pts, 1000,DAC_ALIGN_12B_R);
-   * HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*) sineLookupTable_100_pts, 100,DAC_ALIGN_12B_R);
-   * HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*) sineLookupTable_10_pts, 10,DAC_ALIGN_12B_R);
-   * HAL_DMA_Start_IT(&hdma_dac_ch1, (uint32_t) &sineLookupTable_100_pts, (uint32_t) &hdac1, sizeof(sineLookupTable_100_pts));
-   * HAL_DMA_PollForTransfer(&hdma_memtomem_dma1_channel1, );
-   */
-
-    // HAL_ADC_Start_DMA(&hadc3, (uint32_t*) adc_buffer, ADC_BUFFER_LENGTH);
 
   while (1)
   {
@@ -451,7 +443,7 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 7999;
+  htim3.Init.Prescaler = 79;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 1000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
