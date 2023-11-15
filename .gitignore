@@ -12,3 +12,4 @@ Debug/makefile
 *.map
 *.su
 *.launch
+Debug/*
