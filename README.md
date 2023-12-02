@@ -10,10 +10,9 @@ All of the lab will start from a pre-built STM32 'Project.'  If you're reading t
 
 Open and follow the instructions found in the WORD document in your cloned repo: 
 
->``/Documentation/ECEN-361-Lab-08-Part2-DAC-ADC-Sampling.docx`` 
-[LINK HERE](./Documentation/ECEN-361-Lab-08-Part2-DAC-ADC-Sampling.docx)
+>/Documentation/Assignment.md
 
-Modify the document with answers when finished, then commit your repository to github.   The commit will upload this word document as well and serves as the lab submission.   (Note:  MSWord is assumed to be available.  IF you don't have MSWord to edit this document, talk with the professor or T/A.)
+Modify the document with answers when finished, then commit your repository to github. The commit will upload this document as well and serves as the lab submission.
 
 After committing and pushing to github, be sure to finish the assignment by pasting the URL of this repo into the iLearn Assignment.  
 
@@ -21,8 +20,8 @@ After committing and pushing to github, be sure to finish the assignment by past
 ## Resources Used
 For plotting from the USART2 out, there are two software options suggested:
 *  **Arduino Plotter**  Required in previous ECEN classes, it's likely that this is already installed.  We'll use the "Serial Plotter" option in Arduino.  Note that BYU-I WiFi often blocks Arduino sites an S/W and installation via campus may not be possible.
-<br>
 
+<br>
 
 *  **SerialPlotter** is another free, plotting software that will be shown in the lab.  [SerialPlotter LINK HERE](https://hackaday.io/project/5334-serialplot-realtime-plotting-software)
 
