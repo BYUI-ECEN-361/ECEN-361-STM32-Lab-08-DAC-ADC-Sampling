@@ -160,20 +160,20 @@ You should see varying accuracies of the re-created waveform. Here’s the 8 sam
   
   <mark>[*answer here*]</mark>
 
-## Extra Credit (5 pts maximum, points as indicated)
+## Ideas for Credit to get to 'A' & Extra-Credit (2 pts for any)
 
-* Button S2 was not available for this lab.  Why not? (1 pt)
+* Button S2 was not available for this lab.  Why not?   (only 1 pt for this one)
   
   <mark>[*answer here*]</mark>
 
-* The serial port was done by using the printf() function.  Change it to be a DMA buffer out instead. (5 pts)
+* The serial port was done by using the printf() function.  Change it to be a DMA buffer out instead. 
   
   <mark>[*answer here*]</mark>
 
-* Use another of the timers, set it to fine resolution (µSecs), and trigger it on each start of the sample so you can automatically read how long between samples (5 pts)
+* Use another of the timers, set it to fine resolution (µSecs), and trigger it on each start of the sample so you can automatically read how long between samples 
   
   <mark>[*answer here*]</mark>
 
-* Instead of using a timer’s ISR to launch a manual S/W-triggered ADC, configure the ADC3 to use the “EXTI Conversion Trigger” instead to automatically (H/W triggered) time the samples. Make any comments about it here:  (5 pts)
+* Instead of using a timer’s ISR to launch a manual S/W-triggered ADC, configure the ADC3 to use the “EXTI Conversion Trigger” instead to automatically (H/W triggered) time the samples. Make any comments about it here:  
   
   <mark>[*answer here*]</mark>
