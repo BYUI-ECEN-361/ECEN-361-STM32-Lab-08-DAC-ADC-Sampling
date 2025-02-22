@@ -65,3 +65,4 @@ Debug/Core/Src/main.cyclo
 
 .settings/**
 Debug/**
+/Debug/
